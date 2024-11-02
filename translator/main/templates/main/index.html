@@ -1,0 +1,219 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Language Translator</title>
+    <style>
+        body {
+            font-family: 'Verdana', sans-serif;
+            margin: 0;
+            padding: 0;
+            background: linear-gradient(90deg, #4b4b4b 0%, #6e6e6e 100%);
+            overflow: hidden;
+            position: relative;
+            color: #fbfbfb;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+        }
+
+        h1 {
+            text-align: center;
+            color: #ffffff;
+            margin-bottom: 20px;
+            font-size: 2.5em;
+        }
+
+        form {
+            border-radius: 10px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            position: relative;
+            z-index: 1;
+            width: 90%;
+            max-width: 500px;
+        }
+
+        input[type="text"], select, button {
+            margin: 10px 0;
+            padding: 15px;
+            width: 100%;
+            border: none;
+            border-radius: 10px;
+            transition: all 0.3s ease;
+            font-size: 1.1em;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+        }
+
+        input[type="text"], select {
+            background: rgba(255, 255, 255, 0.85);
+        }
+
+        button {
+            background: linear-gradient(45deg, #474747, #575757);
+            color: white;
+            cursor: pointer;
+            border: none;
+            border-radius: 10px;
+            padding: 15px 20px;
+            font-size: 1.1em;
+            transition: background-color 0.3s, transform 0.3s;
+        }
+
+        button:hover {
+            background: rgba(57, 47, 47, 0.5);
+            transform: scale(1.05);
+        }
+
+        .translation-box {
+            background: rgba(255, 255, 255, 0.9);
+            border-radius: 10px;
+            padding: 20px;
+            margin-top: 20px;
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.3);
+            display: none; 
+            text-align: center;
+            transition: opacity 0.3s ease;
+            z-index: 1;
+            font-size: 1.1em;
+            color: #2c2e31;
+            animation: fadeIn 0.5s ease-in-out; 
+            width: 100%;   
+            max-width: 500px; 
+            box-sizing: border-box; 
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        .shape {
+            position: absolute;
+            border-radius: 50%; /* Changed to make it a circle */
+            z-index: 0;
+            opacity: 0.7;
+            background: rgba(255, 255, 255, 0.5); /* Make shapes visible with a background color */
+        }
+
+        .shape1 {
+            width: 100px;
+            height: 100px;
+            top: 20%;
+            left: 10%;
+        }
+
+        .shape2 {
+            width: 150px;
+            height: 150px;
+            top: 60%;
+            right: 15%;
+        }
+
+        .shape3 {
+            width: 200px;
+            height: 200px;
+            bottom: 10%;
+            left: 40%;
+        }
+
+        @media (max-width: 600px) {
+            input[type="text"], select, button {
+                width: 100%;
+            }
+
+            .translation-box {
+                width: 95%;
+            }
+        }
+    </style>
+</head>
+<body>
+    <h1>Language Translator</h1>
+    <form method="post" id="translationForm">
+        {% csrf_token %}
+        <input type="text" name="translate" required placeholder="Enter text to translate">
+        <br>
+        <label for="language"></label><br>
+        <select required name="language" id="language">
+            {% for language in languages %}
+                <option value="{{ language }}">{{ language }}</option>
+            {% endfor %}
+        </select>
+        <br>
+        <button type="submit">Translate</button>
+    </form>
+    <div class="translation-box" id="translationResult"></div>
+
+    <!-- Background Shapes -->
+    <div class="shape shape1"></div>
+    <div class="shape shape2"></div>
+    <div class="shape shape3"></div>
+
+    <script>
+        const form = document.getElementById('translationForm');
+        const resultBox = document.getElementById('translationResult');
+
+        form.addEventListener('submit', function(event) {
+            event.preventDefault(); // Prevent form submission
+            const formData = new FormData(form);
+
+            fetch(form.action, {
+                method: 'POST',
+                body: formData,
+                headers: {
+                    'X-CSRFToken': '{{ csrf_token }}' // Set CSRF token if needed
+                }
+            })
+            .then(response => response.text())
+            .then(data => {
+                resultBox.style.display = 'block'; // Show the result box
+                resultBox.innerHTML = data; // Display the translation result
+                resultBox.style.opacity = '1'; // Fade in effect
+            })
+            .catch(error => {
+                console.error('Error:', error);
+            });
+        });
+
+        const shapes = document.querySelectorAll('.shape');
+
+        // Function to randomize the movement path of shapes
+        function randomMovement(shape) {
+            const screenWidth = window.innerWidth;
+            const screenHeight = window.innerHeight;
+
+            // Set a random duration for the animation
+            const duration = Math.random() * (10 - 5) + 5; // Random duration between 5 and 10 seconds
+            shape.style.animationDuration = duration + 's';
+
+            // Create a random path for the shape
+            const keyframes = [
+                `0% { transform: translate(${Math.random() * screenWidth}px, ${Math.random() * screenHeight}px); }`,
+                `100% { transform: translate(${Math.random() * screenWidth}px, ${Math.random() * screenHeight}px); }`,
+            ];
+
+            // Create a new style sheet and insert the animation
+            const styleSheet = document.styleSheets[0];
+            const animationName = `moveShape${Math.floor(Math.random() * 1000)}`; // Unique animation name
+            styleSheet.insertRule(`@keyframes ${animationName} { ${keyframes.join(' ')} }`, styleSheet.cssRules.length);
+            
+            // Assign the animation to the shape
+            shape.style.animationName = animationName;
+        }
+
+        // Initialize random movement for each shape
+        shapes.forEach(shape => {
+            randomMovement(shape);
+            // Restart movement periodically
+            setInterval(() => {
+                randomMovement(shape);
+            }, 10000); // Change movement every 10 seconds
+        });
+    </script>
+</body>
+</html>
